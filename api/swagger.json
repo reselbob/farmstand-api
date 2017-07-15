@@ -1,0 +1,341 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "The purpose of this API is to provide fulfillment services for local farmstand sellers",
+    "version": "1.0.0",
+    "title": "Farmstand",
+    "contact": {
+      "email": "bob@CogArtTech.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "tags": [],
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/vendor":{},
+    "/users":{},
+    "/orders":{},
+    "/items": {
+      "get": {
+        "tags": [
+          "public operations"
+        ],
+        "security": [
+          {
+            "oauth": [
+              "user",
+              "admin"
+            ]
+          }
+        ],
+        "summary": "searches items",
+        "operationId": "getItems",
+        "x-swagger-router-controller": "itemController",
+        "description": "By passing in the appropriate options, you can search for items in the system",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "description": "The unique identfier of the item to retrieve",
+            "required": false,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "description": "number of records to return in retrieval",
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          {
+            "in": "query",
+            "name": "startKey",
+            "description": "OPTIONAL the startkey used in paging",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "scope",
+            "description": "OPTIONAL The scope of the get, ALL, ACTIVE, INACTIVE",
+            "type": "string",
+            "default": "ALL",
+            "enum": [
+              "ALL",
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "search results matching criteria",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/item"
+              }
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/scheduleError"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "public operations"
+        ],
+        "security": [
+          {
+            "oauth": [
+              "user",
+              "admin"
+            ]
+          }
+        ],
+        "summary": "adds a item",
+        "x-swagger-router-controller": "schedulerController",
+        "operationId": "addItem",
+        "description": "Adds an item to the system",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "item",
+            "description": "item to add",
+            "schema": {
+              "$ref": "#/definitions/newItem"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "confirms the creation of item, returning the item with an id",
+            "schema": {
+              "$ref": "#/definitions/item"
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/scheduleError"
+            }
+          },
+          "409": {
+            "description": "an existing item already exists",
+            "schema": {
+              "$ref": "#/definitions/scheduleError"
+            }
+          }
+        }
+      }
+    },
+    "/healthcheck": {
+      "get": {
+        "tags": [
+          "public operations"
+        ],
+        "security": [
+          {
+            "oauth": [
+              "admin",
+              "superAdmin"
+            ]
+          }
+        ],
+        "summary": "get the health check of the system",
+        "operationId": "getHealthCheck",
+        "x-swagger-router-controller": "schedulerController",
+        "description": "Get health check information about the operation of the API",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Health Check Information",
+            "schema": {
+              "$ref": "#/definitions/healthCheck"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/scheduleError"
+            }
+          }
+        }
+      }
+    },
+    "/systeminfo": {
+      "get": {
+        "tags": [
+          "public operations"
+        ],
+        "security": [
+          {
+            "oauth": [
+              "admin",
+              "superAdmin"
+            ]
+          }
+        ],
+        "summary": "gets runtime information about the system in non production environments",
+        "operationId": "getSystemInfo",
+        "x-swagger-router-controller": "schedulerController",
+        "description": "gets runtime information about the system in non production environments",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "System information",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/scheduleError"
+            }
+          },
+          "403": {
+            "description": "access forbidden",
+            "schema": {
+              "$ref": "#/definitions/scheduleError"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "newItem": {
+      "type": "object",
+      "required": [
+        "description"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "example": "Tomato Delight"
+        }
+      }
+    },
+    "item": {
+      "allOf": [
+        {
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "deactivationDate": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        {
+          "$ref": "#/definitions/newItem"
+        }
+      ]
+    },
+    "scheduleError": {
+      "type": "object",
+      "required": [
+        "statusCode",
+        "title",
+        "message"
+      ],
+      "properties": {
+        "statusCode": {
+          "type": "number",
+          "format": "int32",
+          "example": 400
+        },
+        "title": {
+          "type": "string",
+          "example": "BAD FORMAT ERROR"
+        },
+        "message": {
+          "type": "string",
+          "example": "You provide input that does not comply with the format expected"
+        }
+      }
+    },
+    "healthCheck": {
+      "type": "object",
+      "required": [
+        "version",
+        "uptime",
+        "nodeVersion",
+        "platform",
+        "memoryUsage"
+      ],
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "uptime": {
+          "type": "string"
+        },
+        "nodeVersion": {
+          "type": "string",
+          "example": "4.3"
+        },
+        "platform": {
+          "type": "string",
+          "example": "Linux"
+        },
+        "memoryUsage": {
+          "type": "string"
+        },
+        "cronJobsInForce": {
+          "type": "string",
+          "format": "int32"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "oauth": {
+      "type": "oauth2",
+      "authorizationUrl": "",
+      "tokenUrl": "",
+      "flow": "accessCode",
+      "scopes": {
+        "user": "Defines permissions that are typical to a user",
+        "admin": "Defines permissions that are typical to an admin. An admin is a administrator deemed by an enterprise client of the system",
+        "superAdmin": "Defines permissions that are typical to an superAdmin. A superAdmin is a system defined administrator."
+      }
+    }
+  },
+  "host": "localhost",
+  "basePath": "/H2Scheduler/v1"
+}
